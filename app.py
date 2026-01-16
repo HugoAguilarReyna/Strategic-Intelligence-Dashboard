@@ -65,12 +65,19 @@ st.markdown("""
 # --- 2. MOTOR DE CARGA Y FILTROS ---
 @st.cache_data
 def load_data():
-    base_path = Path(__file__).parent / "data"
+    # Usamos Path.cwd() para asegurar que partimos de la raíz del proyecto en Render
+    base_path = Path.cwd() / "Data"  # Corregido a "Data" con D mayúscula para match con GitHub
     archivo_path = base_path / "data_gold_main.csv"
+    
     if not archivo_path.exists():
-        st.error("❌ Archivo de datos no encontrado en la ruta: data/data_gold_main.csv")
+        # Mensaje de error más técnico para debuguear en Render
+        st.error(f"❌ Error Crítico: No se encontró {archivo_path.name} en {base_path}")
+        st.info("Asegúrate de que la carpeta 'Data' esté en la raíz de tu repositorio.")
         st.stop()
+        
     df = pd.read_csv(archivo_path)
+    
+    # --- Limpieza PhD Suite ---
     df.columns = [col.lower().strip() for col in df.columns]
     df['total'] = pd.to_numeric(df['total'], errors='coerce').fillna(0)
     df['fecha_timbrado'] = pd.to_datetime(df['fecha_timbrado'], errors='coerce')
@@ -78,6 +85,7 @@ def load_data():
     df['tipo'] = df['tipo'].fillna("I").str.upper()
     df['estatus'] = df['estatus'].fillna("vigente")
     df['metodo_pago'] = df['metodo_pago'].fillna("PUE")
+    
     return df.dropna(subset=['fecha_timbrado'])
 
 df_raw = load_data()
@@ -519,4 +527,5 @@ with col_btn:
 st.markdown("<div class='section-header'>Explorador Detallado</div>", unsafe_allow_html=True)
 
 cols_view = [c for c in ['uuid', 'folio', 'fecha_timbrado', 'nombre', 'total', 'metodo_pago', 'estatus'] if c in df_f.columns]
+
 st.dataframe(df_f[cols_view].sort_values(by='total', ascending=False), use_container_width=True)
